@@ -1,0 +1,30 @@
+{
+  "name": "kalimdor_dl_model",
+  "version": "1.0.0",
+  "description": "InHouse Training Project for Deep Learning",
+  "main": "index.ts",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "dev": "nodemon",
+    "start": "ts-node index.ts"
+  },
+  "author": "Durgesh Pandey",
+  "license": "MIT",
+  "dependencies": {
+    "kalimdor": "^1.2.6"
+  },
+  "devDependencies": {
+    "nodemon": "^2.0.7",
+    "ts-node": "^9.1.1",
+    "typescript": "^4.2.4"
+  },
+  "nodemonConfig": {
+    "exec": "ts-node index.ts",
+    "ext": "ts,js,json",
+    "ignore": "node_modules",
+    "watch": [
+      "index.ts",
+      "src/**/*.*"
+    ]
+  }
+}
