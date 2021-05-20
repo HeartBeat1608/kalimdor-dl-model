@@ -1,8 +1,8 @@
 export interface DataSetPartition {
-  trainX: any[];
-  trainY: any[];
-  testX: any[];
-  testY: any[];
+  trainX: FinalFeatureRow[];
+  trainY: FinalFeatureRow[];
+  testX: FinalFeatureRow[];
+  testY: FinalFeatureRow[];
 }
 
 export interface DatasetRow {
@@ -22,7 +22,20 @@ export interface FeatureRow {
   Production: string;
 }
 
+export interface FinalFeatureRow {
+  State_Name: number;
+  Season: number;
+  Area: number;
+  Production: number;
+}
+
 export interface SeasonWiseDataset {
   Kharif: FeatureRow[];
   Rabi: FeatureRow[];
 }
+
+export const SEASON_CODES = {
+  Kharif: 1,
+  Rabi: 2,
+  "Whole Year": 3,
+};

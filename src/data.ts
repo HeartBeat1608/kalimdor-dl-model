@@ -3,6 +3,7 @@ import {
   DataSetPartition,
   DatasetRow,
   FeatureRow,
+  FinalFeatureRow,
   SeasonWiseDataset,
 } from "./types";
 
@@ -40,6 +41,10 @@ export const split_season_wise = async (
       Rabi: rabi,
     });
   });
+};
+
+export const prepareDataset = (STATE_CODES: any[]): FinalFeatureRow[] => {
+  return [];
 };
 
 export const parts = (base: DatasetRow[]): DataSetPartition => {
