@@ -11,6 +11,8 @@
   "author": "Durgesh Pandey",
   "license": "MIT",
   "dependencies": {
+    "@tensorflow/tfjs": "^3.6.0",
+    "@tensorflow/tfjs-vis": "^1.5.1",
     "csvtojson": "^2.0.10",
     "kalimdor": "^1.2.6",
     "lodash": "^4.17.21"

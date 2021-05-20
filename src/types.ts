@@ -14,3 +14,15 @@ export interface DatasetRow {
   Area: string;
   Production: string;
 }
+
+export interface FeatureRow {
+  State_Name: string;
+  Season: string;
+  Area: string;
+  Production: string;
+}
+
+export interface SeasonWiseDataset {
+  Kharif: FeatureRow[];
+  Rabi: FeatureRow[];
+}
