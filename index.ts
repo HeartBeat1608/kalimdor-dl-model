@@ -1,14 +1,18 @@
 import { join, basename } from "path";
 import { sortBy } from "lodash";
 import chalk from "chalk";
+import "@tensorflow/tfjs-node";
+import { Sequential, data, tensor1d } from "@tensorflow/tfjs";
 
 import {
   loadDataset,
+  parts,
   prepareDataset,
   preprocess,
   split_season_wise,
 } from "./src/data";
 import {
+  DataSetPartition,
   DatasetRow,
   FeatureRow,
   FinalFeatureRow,
@@ -16,10 +20,10 @@ import {
 } from "./src/types";
 import { getUniqueSeasons, getUniqueStates } from "./src/utils";
 import { error, info, success, text_yellow } from "./src/displays";
-import { Sequential } from "@tensorflow/tfjs";
 import { makeModel } from "./src/model";
 
-const DISPLAY_FULL_LOGS: boolean = false;
+console.log(process.argv);
+const DISPLAY_FULL_LOGS: boolean = true;
 
 const main = async () => {
   // Load Data
@@ -35,6 +39,13 @@ const main = async () => {
 
   const jsonData: DatasetRow[] = await loadDataset(filePath);
   success(`Dataset Loaded : ${text_yellow(basename(filePath))}`);
+
+  info("Normalizing Dataset for larger values");
+  jsonData.forEach((row) => {
+    row.Production = parseInt(row.Production.toString()) / 1e5;
+    row.Area = parseInt(row.Area.toString());
+  });
+  success("Dataset Production normalized");
 
   const all_states: string[] = sortBy(getUniqueStates(jsonData));
   const all_seasons: string[] = sortBy(getUniqueSeasons(jsonData));
@@ -65,23 +76,101 @@ const main = async () => {
   }
 
   // prepare data for model
-  const STATE_CODES = all_states.map((val: string, idx: number) => ({
-    state: val,
-    value: idx + 1,
-  }));
+  const STATE_CODES: Map<string, number> = new Map();
+  all_states.forEach((val: string, idx: number) => {
+    STATE_CODES.set(val, idx + 1);
+  });
 
-  const finalFeatureSet: FinalFeatureRow[] = prepareDataset(STATE_CODES);
+  const finalKharifFeatureSet: FinalFeatureRow[] = prepareDataset(
+    STATE_CODES,
+    dt2.Kharif,
+    1
+  );
+  const finalRabiFeatureSet: FinalFeatureRow[] = prepareDataset(
+    STATE_CODES,
+    dt2.Rabi,
+    2
+  );
+
+  // Split Training and testing sets
+  const TRAINING_SIZE = 0.8; // 70% for training and 30% for testing
+  const { train: kharifSplitTrain, test: kharifSplitTest }: DataSetPartition =
+    parts(finalKharifFeatureSet, TRAINING_SIZE);
+  const { train: rabiSplitTrain, test: rabiSplitTest }: DataSetPartition =
+    parts(finalRabiFeatureSet, TRAINING_SIZE);
+
+  // Make Kharif Dataset
+  const kharifX = kharifSplitTrain.map((row) =>
+    Object.values(row).map((x) => parseInt(x))
+  );
+  const KharifY: number[] = kharifX.map((row) => row.pop() || 0);
+  const kharifDataset = data
+    .zip({
+      xs: data.array(kharifX),
+      ys: data.array(KharifY),
+    })
+    .batch(128)
+    .shuffle(100);
+
+  // Make Rabi Dataset
+  const RabiX: number[][] = rabiSplitTrain.map((row) =>
+    Object.values(row).map((x) => parseInt(x))
+  );
+  const RabiY: number[] = RabiX.map((row) => row.pop() || 0);
+
+  const rabiDataset = data
+    .zip({
+      xs: data.array(RabiX),
+      ys: data.array(RabiY),
+    })
+    .batch(128)
+    .shuffle(100);
 
   // Build Model
+  info("Building Model");
   const model: Sequential = makeModel();
+  if (DISPLAY_FULL_LOGS) {
+    model.summary();
+  }
+  success("Model Compiled");
 
   // Train Model
+  const totalEpochs: number = 5;
+
+  info("Training on Kharif Season Set");
+  const kharifHistory = await model.fitDataset(kharifDataset, {
+    epochs: totalEpochs,
+  });
+
+  info("Training on Rabi Season Set");
+  const rabiHistory = await model.fitDataset(rabiDataset, {
+    epochs: totalEpochs,
+  });
 
   // Test Model
+  const [ky, ...kx] = Object.values(kharifSplitTest[0]).reverse();
+  // console.log(tensor1d(kx, "int32").transpose());
+  const kprediction = model.predict(tensor1d(kx, "int32").transpose());
+  const [ry, ...rx] = Object.values(rabiSplitTest[0]).reverse();
+  const rprediction = model.predict(tensor1d(rx, "int32").transpose());
+
+  console.log({
+    prediction: kprediction,
+    actual: ky,
+    error: Math.abs(parseInt(kprediction.toString()) - ky),
+  });
+
+  console.log({
+    prediction: rprediction,
+    actual: ry,
+    error: Math.abs(parseInt(rprediction.toString()) - ry),
+  });
 
   // Evaluate Model with KFold (K=10)
 
   // Extimate Model with some random data from the databse itself for confirmation
+  success(JSON.stringify(kharifHistory.history, null, 2));
+  success(JSON.stringify(rabiHistory.history, null, 2));
 };
 
 // Entry Point of the App

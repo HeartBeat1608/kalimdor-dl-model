@@ -6,6 +6,7 @@ import {
   FinalFeatureRow,
   SeasonWiseDataset,
 } from "./types";
+import { shuffleAndNormalize } from "./utils";
 
 export const loadDataset = async (path: string): Promise<DatasetRow[]> => {
   return await csv({ output: "json" }).fromFile(path, { autoClose: true });
@@ -43,15 +44,33 @@ export const split_season_wise = async (
   });
 };
 
-export const prepareDataset = (STATE_CODES: any[]): FinalFeatureRow[] => {
-  return [];
+export const prepareDataset = (
+  STATE_CODES: Map<string, number>,
+  dataset: FeatureRow[],
+  SEASON_CODE: number
+): FinalFeatureRow[] => {
+  return dataset.map((row) => {
+    let state = STATE_CODES.get(row.State_Name);
+    if (!state) state = 0;
+    return {
+      State_Number: state,
+      Season_Number: SEASON_CODE,
+      Area: row.Area,
+      Production: row.Production,
+    };
+  });
 };
 
-export const parts = (base: DatasetRow[]): DataSetPartition => {
+export const parts = (
+  base: FinalFeatureRow[],
+  test_size: number
+): DataSetPartition => {
+  const test_len: number = Math.round(base.length * test_size);
+
+  base = shuffleAndNormalize(base);
+
   return {
-    testX: [],
-    testY: [],
-    trainX: [],
-    trainY: [],
+    train: base.slice(0, test_len),
+    test: base.slice(test_len),
   };
 };

@@ -1,5 +1,5 @@
 import { shuffle } from "lodash";
-import { DatasetRow } from "./types";
+import { DatasetRow, FinalFeatureRow } from "./types";
 
 export const getUniqueStates = (list: DatasetRow[]): string[] => {
   const values = list.map((obj) => obj.State_Name);
@@ -11,6 +11,8 @@ export const getUniqueSeasons = (list: DatasetRow[]): string[] => {
   return [...new Set(values)];
 };
 
-export const shuffleAndNormalize = (data: DatasetRow[]): DatasetRow[] => {
+export const shuffleAndNormalize = (
+  data: FinalFeatureRow[]
+): FinalFeatureRow[] => {
   return shuffle(data);
 };

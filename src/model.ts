@@ -1,7 +1,7 @@
 import { layers, Sequential, train } from "@tensorflow/tfjs";
-import { model_selection } from "kalimdor";
 
 export const makeModel = (): Sequential => {
+  const LEARNING_RATE = 1e-6;
   const model = new Sequential({ name: "Agri_CNN" });
 
   // Input Layer
@@ -12,18 +12,11 @@ export const makeModel = (): Sequential => {
     })
   );
 
-  // Dropout layer 10% (anti-overfitting)
-  model.add(
-    layers.dropout({
-      rate: 0.1,
-    })
-  );
-
   // Layer 1
   model.add(
     layers.dense({
       units: 32,
-      activation: "relu",
+      activation: "mish",
     })
   );
 
@@ -68,20 +61,11 @@ export const makeModel = (): Sequential => {
   );
 
   // optimizer
-  const optimizer = train.adam(0.01);
+  const optimizer = train.adam(LEARNING_RATE);
   model.compile({
     optimizer,
-    loss: "logCosh",
-    metrics: ["accuracy"],
+    loss: "meanAbsoluteError",
+    metrics: ["accuracy", "precision"],
   });
   return model;
-};
-
-export const validation = () => {
-  const kfold = new model_selection.KFold({
-    k: 128,
-    shuffle: true,
-  });
-
-  return kfold;
 };

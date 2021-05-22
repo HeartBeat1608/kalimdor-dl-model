@@ -1,30 +1,28 @@
 export interface DataSetPartition {
-  trainX: FinalFeatureRow[];
-  trainY: FinalFeatureRow[];
-  testX: FinalFeatureRow[];
-  testY: FinalFeatureRow[];
+  train: FinalFeatureRow[];
+  test: FinalFeatureRow[];
 }
 
 export interface DatasetRow {
   State_Name: string;
   District_Name: string;
-  Crop_Year: string;
+  Crop_Year: number;
   Season: string;
   Crop: string;
-  Area: string;
-  Production: string;
+  Area: number;
+  Production: number;
 }
 
 export interface FeatureRow {
   State_Name: string;
   Season: string;
-  Area: string;
-  Production: string;
+  Area: number;
+  Production: number;
 }
 
 export interface FinalFeatureRow {
-  State_Name: number;
-  Season: number;
+  State_Number: number;
+  Season_Number: number;
   Area: number;
   Production: number;
 }
